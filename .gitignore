@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+wc2026.log
+*.log
+pid.txt
+*.pid

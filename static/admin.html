@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>世界杯竞猜 - 管理后台</title>
+<style>
+:root {
+  --bg: #0f0f1a;
+  --card: #1e1e32;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --accent: #e94560;
+  --green: #22c55e;
+  --gold: #fbbf24;
+  --border: #2d2d4a;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  padding: 20px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+h1 { font-size: 24px; margin-bottom: 20px; color: var(--gold); }
+h2 { font-size: 18px; margin-bottom: 12px; }
+.match-item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 10px;
+}
+.match-item .info { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+.match-item .teams { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+.match-item .score-form { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.match-item .score-form input { width: 60px; padding: 8px; text-align: center; background: rgba(255,255,255,0.1); border: 1px solid var(--border); border-radius: 6px; color: white; font-size: 16px; }
+.match-item .score-form button { padding: 8px 16px; background: var(--green); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+.match-item .score-form button:hover { opacity: 0.9; }
+.match-item.finished { border-left: 4px solid var(--green); }
+.match-item .result { color: var(--green); font-weight: 600; font-size: 14px; }
+.section { margin-bottom: 30px; }
+.filter-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; margin: 0 4px 8px 0; }
+.filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+.stats { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; }
+.stat-box { background: var(--card); padding: 12px 20px; border-radius: 10px; border: 1px solid var(--border); }
+.stat-box .num { font-size: 28px; font-weight: 800; color: var(--gold); }
+.stat-box .label { font-size: 13px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<h1>⚽ 2026世界杯竞猜 · 管理后台</h1>
+
+<div class="stats" id="stats">
+  <div class="stat-box"><div class="num" id="totalMatches">0</div><div class="label">总比赛</div></div>
+  <div class="stat-box"><div class="num" id="finishedMatches">0</div><div class="label">已结束</div></div>
+  <div class="stat-box"><div class="num" id="totalUsers">0</div><div class="label">用户数</div></div>
+</div>
+
+<div class="section">
+  <h2>📅 比赛管理</h2>
+  <div id="filterBar"></div>
+  <div id="matchList"></div>
+</div>
+
+<div class="section">
+  <h2>🔄 危险操作</h2>
+  <button onclick="resetBets()" style="padding:10px 20px;background:var(--accent);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;">重置所有竞猜数据</button>
+</div>
+
+<script>
+let matches = [];
+let filter = 'all';
+
+async function load() {
+  let [mRes, uRes] = await Promise.all([
+    const API_BASE = 'http://10.11.20.136:8888';
+
+    fetch(API_BASE + '/api/matches'),
+    fetch(API_BASE + '/api/admin/users')
+  ]);
+  let mData = await mRes.json();
+  let uData = await uRes.json();
+  matches = mData.matches || [];
+  document.getElementById('totalMatches').textContent = matches.length;
+  document.getElementById('finishedMatches').textContent = matches.filter(m => m.status === 'finished').length;
+  document.getElementById('totalUsers').textContent = (uData.users || []).length;
+  
+  // 筛选按钮
+  let stages = [...new Set(matches.map(m => m.stage || m.group))];
+  let fhtml = `<button class="filter-btn active" onclick="setFilter('all')">全部</button>`;
+  stages.forEach(s => { fhtml += `<button class="filter-btn" onclick="setFilter('${s}')">${s}</button>`; });
+  document.getElementById('filterBar').innerHTML = fhtml;
+  
+  renderMatches();
+}
+
+function setFilter(f) {
+  filter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  renderMatches();
+}
+
+function renderMatches() {
+  let filtered = filter === 'all' ? matches : matches.filter(m => (m.stage || m.group) === filter);
+  filtered.sort((a, b) => a.time.localeCompare(b.time));
+  let html = '';
+  filtered.forEach(m => {
+    let isFinished = m.status === 'finished';
+    html += `<div class="match-item ${isFinished ? 'finished' : ''}">
+      <div class="info">${m.stage || m.group} · ${m.time.replace('2026-', '')} · ${m.venue || ''}</div>
+      <div class="teams">${m.home_team} vs ${m.away_team}</div>`;
+    if (isFinished) {
+      html += `<div class="result">✅ 已结束 ${m.home_score} : ${m.away_score}</div>`;
+    } else {
+      html += `<div class="score-form">
+        <span>比分:</span>
+        <input type="number" id="hs_${m.id}" min="0" max="20" placeholder="主">
+        <span>:</span>
+        <input type="number" id="as_${m.id}" min="0" max="20" placeholder="客">
+        <button onclick="updateResult('${m.id}')">结算比赛</button>
+      </div>`;
+    }
+    html += `</div>`;
+  });
+  document.getElementById('matchList').innerHTML = html;
+}
+
+async function updateResult(matchId) {
+  let hs = parseInt(document.getElementById('hs_' + matchId).value);
+  let as_ = parseInt(document.getElementById('as_' + matchId).value);
+  if (isNaN(hs) || isNaN(as_)) { alert('请输入有效比分'); return; }
+  if (!confirm(`确认更新本场结果：${hs} : ${as_}？\n此操作不可撤销！`)) return;
+  
+  let res = await fetch(API_BASE + '/api/admin/update_result', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ match_id: matchId, home_score: hs, away_score: as_ })
+  });
+  let data = await res.json();
+  if (data.ok) {
+    alert('比赛结果已更新！');
+    load();
+  } else {
+    alert(data.msg);
+  }
+}
+
+async function resetBets() {
+  if (!confirm('确定要重置所有用户的竞猜数据吗？此操作不可恢复！')) return;
+  if (!confirm('再次确认：所有竞猜数据将被清空！')) return;
+  let res = await fetch(API_BASE + '/api/admin/reset_bets', { method: 'POST' });
+  let data = await res.json();
+  if (data.ok) { alert('竞猜数据已重置'); }
+}
+
+load();
+</script>
+</body>
+</html>
