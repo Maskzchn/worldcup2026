@@ -833,7 +833,8 @@ function filterBets(filter) {
 
 // ===== 积分榜 =====
 function renderStandings() {
-  let groups = calcStandings();
+  try {
+    let groups = calcStandings();
     let html = '';
     let groupKeys = Object.keys(groups).sort();
     if (groupKeys.length === 0) {
