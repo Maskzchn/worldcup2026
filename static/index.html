@@ -828,8 +828,6 @@ document.addEventListener('click', function(e) {
 });
 
 
-
-
 let currentUser = localStorage.getItem('wc2026_nickname') || '';
 let matches = [];
 let matchFilter = 'all';
@@ -837,8 +835,6 @@ let betFilter = 'upcoming';
 let currentBetMatchId = null;
 let selectedResult = null;
 let allGroupNames = [];
-
-// ===== 登录 =====
 function login() {
   let nickname = document.getElementById('nicknameInput').value.trim();
   if (!nickname) { alert('请输入昵称'); return; }
@@ -1362,6 +1358,7 @@ function importBetsData(jsonStr) {
 }
 
 // 给管理员使用 - 通过URL参数激活管理功能
+
 
 
 </script>
