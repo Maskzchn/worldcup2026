@@ -106,9 +106,9 @@ function render() {
   // 筛选按钮
   let groups = [...new Set(MATCHES_DATA.map(m => m.group))].sort();
   let fb = document.getElementById("filterBar");
-  fb.innerHTML = '<button class="filter-btn active" onclick="filterGroup(this,\'\')">全部</button>';
-  groups.forEach(g => {
-    fb.innerHTML += '<button class="filter-btn" onclick="filterGroup(this,\'+g+\')">' + g + '组</button>';
+  fb.innerHTML = '<button class="filter-btn active" data-group="">全部</button><button class="filter-btn" data-group="A">A</button><button class="filter-btn" data-group="B">B</button><button class="filter-btn" data-group="C">C</button><button class="filter-btn" data-group="D">D</button><button class="filter-btn" data-group="E">E</button><button class="filter-btn" data-group="F">F</button><button class="filter-btn" data-group="G">G</button><button class="filter-btn" data-group="H">H</button><button class="filter-btn" data-group="I">I</button><button class="filter-btn" data-group="J">J</button><button class="filter-btn" data-group="K">K</button><button class="filter-btn" data-group="L">L</button>';
+  document.querySelectorAll(".filter-btn").forEach(function(b, i) {
+    b.onclick = function() { filterGroup(this, this.dataset.group || ""); };
   });
 
   // 比赛列表
