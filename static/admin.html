@@ -3,162 +3,216 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>世界杯竞猜 - 管理后台</title>
+<title>2026世界杯竞猜 · 管理后台</title>
 <style>
 :root {
-  --bg: #0f0f1a;
-  --card: #1e1e32;
-  --text: #e2e8f0;
-  --muted: #94a3b8;
-  --accent: #e94560;
-  --green: #22c55e;
-  --gold: #fbbf24;
-  --border: #2d2d4a;
+  --bg: #0f0f1a; --card: #1e1e32; --text: #e2e8f0; --muted: #94a3b8;
+  --accent: #e94560; --green: #22c55e; --gold: #fbbf24; --border: #2d2d4a;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  padding: 20px;
-  max-width: 900px;
-  margin: 0 auto;
+  font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background: var(--bg); color: var(--text); padding: 20px; max-width: 1000px; margin: 0 auto;
 }
 h1 { font-size: 24px; margin-bottom: 20px; color: var(--gold); }
-h2 { font-size: 18px; margin-bottom: 12px; }
-.match-item {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 14px;
-  margin-bottom: 10px;
-}
-.match-item .info { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
-.match-item .teams { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
-.match-item .score-form { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-.match-item .score-form input { width: 60px; padding: 8px; text-align: center; background: rgba(255,255,255,0.1); border: 1px solid var(--border); border-radius: 6px; color: white; font-size: 16px; }
-.match-item .score-form button { padding: 8px 16px; background: var(--green); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
-.match-item .score-form button:hover { opacity: 0.9; }
-.match-item.finished { border-left: 4px solid var(--green); }
-.match-item .result { color: var(--green); font-weight: 600; font-size: 14px; }
-.section { margin-bottom: 30px; }
-.filter-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; margin: 0 4px 8px 0; }
-.filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
-.stats { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; }
-.stat-box { background: var(--card); padding: 12px 20px; border-radius: 10px; border: 1px solid var(--border); }
+h2 { font-size: 18px; margin: 20px 0 12px; }
+.header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+.stats { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+.stat-box { background: var(--card); padding: 12px 20px; border-radius: 10px; border: 1px solid var(--border); min-width: 100px; }
 .stat-box .num { font-size: 28px; font-weight: 800; color: var(--gold); }
 .stat-box .label { font-size: 13px; color: var(--muted); }
+.toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.toolbar button, .import-label {
+  padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;
+}
+.btn-green { background: var(--green); color: white; }
+.btn-blue { background: #3b82f6; color: white; }
+.btn-red { background: var(--accent); color: white; }
+.import-label { display: inline-block; }
+input[type="file"] { display: none; }
+.filter-bar { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.filter-btn {
+  padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 13px;
+}
+.filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+.match-item {
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 8px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+}
+.match-item .info { font-size: 12px; color: var(--muted); flex: 0 0 100%; }
+.match-item .teams { font-size: 15px; font-weight: 600; flex: 1; min-width: 200px; }
+.match-item.finished { border-left: 4px solid var(--green); }
+.match-item .result-display { color: var(--green); font-weight: 700; font-size: 18px; margin: 0 10px; }
+.match-item .edit-form { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.match-item .edit-form input {
+  width: 50px; padding: 8px; text-align: center; background: rgba(255,255,255,0.1); border: 1px solid var(--border);
+  border-radius: 6px; color: white; font-size: 16px;
+}
+.match-item .edit-form button {
+  padding: 8px 16px; background: var(--green); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;
+}
+.match-item .edit-form button:hover { opacity: 0.85; }
+.empty { text-align: center; padding: 40px; color: var(--muted); }
 </style>
 </head>
 <body>
 
 <h1>⚽ 2026世界杯竞猜 · 管理后台</h1>
+<p style="color:var(--muted);margin-bottom:20px;">💡 此页面纯前端运行，数据存储在浏览器本地。⚠️ 切换到其他浏览器会丢失数据，请定期导出备份。</p>
 
 <div class="stats" id="stats">
   <div class="stat-box"><div class="num" id="totalMatches">0</div><div class="label">总比赛</div></div>
   <div class="stat-box"><div class="num" id="finishedMatches">0</div><div class="label">已结束</div></div>
-  <div class="stat-box"><div class="num" id="totalUsers">0</div><div class="label">用户数</div></div>
+  <div class="stat-box"><div class="num" id="totalUsers">0</div><div class="label">竞猜用户</div></div>
+  <div class="stat-box"><div class="num" id="totalBets">0</div><div class="label">总竞猜数</div></div>
 </div>
 
-<div class="section">
-  <h2>📅 比赛管理</h2>
-  <div id="filterBar"></div>
-  <div id="matchList"></div>
+<div class="toolbar">
+  <button class="btn-green" onclick="exportData()">📥 导出数据</button>
+  <label class="btn-blue import-label" for="importFile">📤 导入数据</label>
+  <input type="file" id="importFile" accept=".json" onchange="importData(event)">
+  <button class="btn-red" onclick="resetData()">🗑️ 重置所有</button>
 </div>
 
-<div class="section">
-  <h2>🔄 危险操作</h2>
-  <button onclick="resetBets()" style="padding:10px 20px;background:var(--accent);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;">重置所有竞猜数据</button>
-</div>
+<h2>📅 比赛管理</h2>
+<div class="filter-bar" id="filterBar"></div>
+<div id="matchList"><div class="empty">加载中...</div></div>
 
 <script>
-let matches = [];
-let filter = 'all';
+const MATCHES_DATA = [{"id": "group_A_1", "stage": "小组赛", "group": "A组", "match_number": 1, "time": "2026-06-12 09:00", "home_team": "墨西哥", "away_team": "南非", "venue": "墨西哥城体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_A_2", "stage": "小组赛", "group": "A组", "match_number": 2, "time": "2026-06-12 12:00", "home_team": "韩国", "away_team": "捷克", "venue": "墨西哥城体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_A_3", "stage": "小组赛", "group": "A组", "match_number": 3, "time": "2026-06-15 09:00", "home_team": "墨西哥", "away_team": "韩国", "venue": "墨西哥城体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_A_4", "stage": "小组赛", "group": "A组", "match_number": 4, "time": "2026-06-15 12:00", "home_team": "南非", "away_team": "捷克", "venue": "瓜达拉哈拉体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_A_5", "stage": "小组赛", "group": "A组", "match_number": 5, "time": "2026-06-18 09:00", "home_team": "墨西哥", "away_team": "捷克", "venue": "墨西哥城体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_A_6", "stage": "小组赛", "group": "A组", "match_number": 6, "time": "2026-06-18 12:00", "home_team": "南非", "away_team": "韩国", "venue": "蒙特雷体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_B_1", "stage": "小组赛", "group": "B组", "match_number": 7, "time": "2026-06-12 06:00", "home_team": "加拿大", "away_team": "波黑", "venue": "多伦多体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_B_2", "stage": "小组赛", "group": "B组", "match_number": 8, "time": "2026-06-12 09:30", "home_team": "卡塔尔", "away_team": "瑞士", "venue": "温哥华BC广场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_B_3", "stage": "小组赛", "group": "B组", "match_number": 9, "time": "2026-06-15 06:00", "home_team": "加拿大", "away_team": "卡塔尔", "venue": "温哥华BC广场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_B_4", "stage": "小组赛", "group": "B组", "match_number": 10, "time": "2026-06-15 09:30", "home_team": "波黑", "away_team": "瑞士", "venue": "多伦多体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_B_5", "stage": "小组赛", "group": "B组", "match_number": 11, "time": "2026-06-18 06:00", "home_team": "加拿大", "away_team": "瑞士", "venue": "温哥华BC广场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_B_6", "stage": "小组赛", "group": "B组", "match_number": 12, "time": "2026-06-18 09:30", "home_team": "波黑", "away_team": "卡塔尔", "venue": "多伦多体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_C_1", "stage": "小组赛", "group": "C组", "match_number": 13, "time": "2026-06-13 09:00", "home_team": "巴西", "away_team": "摩洛哥", "venue": "洛杉矶体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_C_2", "stage": "小组赛", "group": "C组", "match_number": 14, "time": "2026-06-13 12:00", "home_team": "海地", "away_team": "苏格兰", "venue": "旧金山湾区体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_C_3", "stage": "小组赛", "group": "C组", "match_number": 15, "time": "2026-06-16 09:00", "home_team": "巴西", "away_team": "海地", "venue": "洛杉矶体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_C_4", "stage": "小组赛", "group": "C组", "match_number": 16, "time": "2026-06-16 12:00", "home_team": "摩洛哥", "away_team": "苏格兰", "venue": "西雅图体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_C_5", "stage": "小组赛", "group": "C组", "match_number": 17, "time": "2026-06-19 09:00", "home_team": "巴西", "away_team": "苏格兰", "venue": "洛杉矶体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_C_6", "stage": "小组赛", "group": "C组", "match_number": 18, "time": "2026-06-19 12:00", "home_team": "摩洛哥", "away_team": "海地", "venue": "西雅图体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_D_1", "stage": "小组赛", "group": "D组", "match_number": 19, "time": "2026-06-13 06:00", "home_team": "美国", "away_team": "巴拉圭", "venue": "达拉斯体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_D_2", "stage": "小组赛", "group": "D组", "match_number": 20, "time": "2026-06-13 09:30", "home_team": "澳大利亚", "away_team": "土耳其", "venue": "旧金山湾区体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_D_3", "stage": "小组赛", "group": "D组", "match_number": 21, "time": "2026-06-16 06:00", "home_team": "美国", "away_team": "澳大利亚", "venue": "西雅图体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_D_4", "stage": "小组赛", "group": "D组", "match_number": 22, "time": "2026-06-16 09:30", "home_team": "巴拉圭", "away_team": "土耳其", "venue": "达拉斯体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_D_5", "stage": "小组赛", "group": "D组", "match_number": 23, "time": "2026-06-19 06:00", "home_team": "美国", "away_team": "土耳其", "venue": "达拉斯体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_D_6", "stage": "小组赛", "group": "D组", "match_number": 24, "time": "2026-06-19 09:30", "home_team": "巴拉圭", "away_team": "澳大利亚", "venue": "旧金山湾区体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_E_1", "stage": "小组赛", "group": "E组", "match_number": 25, "time": "2026-06-14 09:00", "home_team": "德国", "away_team": "库拉索", "venue": "波士顿体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_E_2", "stage": "小组赛", "group": "E组", "match_number": 26, "time": "2026-06-14 12:00", "home_team": "科特迪瓦", "away_team": "厄瓜多尔", "venue": "纽约新泽西体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_E_3", "stage": "小组赛", "group": "E组", "match_number": 27, "time": "2026-06-17 09:00", "home_team": "德国", "away_team": "科特迪瓦", "venue": "波士顿体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_E_4", "stage": "小组赛", "group": "E组", "match_number": 28, "time": "2026-06-17 12:00", "home_team": "库拉索", "away_team": "厄瓜多尔", "venue": "迈阿密体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_E_5", "stage": "小组赛", "group": "E组", "match_number": 29, "time": "2026-06-20 09:00", "home_team": "德国", "away_team": "厄瓜多尔", "venue": "纽约新泽西体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_E_6", "stage": "小组赛", "group": "E组", "match_number": 30, "time": "2026-06-20 12:00", "home_team": "库拉索", "away_team": "科特迪瓦", "venue": "波士顿体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_F_1", "stage": "小组赛", "group": "F组", "match_number": 31, "time": "2026-06-14 06:00", "home_team": "荷兰", "away_team": "日本", "venue": "堪萨斯城体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_F_2", "stage": "小组赛", "group": "F组", "match_number": 32, "time": "2026-06-14 09:30", "home_team": "瑞典", "away_team": "突尼斯", "venue": "休斯敦体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_F_3", "stage": "小组赛", "group": "F组", "match_number": 33, "time": "2026-06-17 06:00", "home_team": "荷兰", "away_team": "瑞典", "venue": "达拉斯体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_F_4", "stage": "小组赛", "group": "F组", "match_number": 34, "time": "2026-06-17 09:30", "home_team": "日本", "away_team": "突尼斯", "venue": "堪萨斯城体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_F_5", "stage": "小组赛", "group": "F组", "match_number": 35, "time": "2026-06-20 06:00", "home_team": "荷兰", "away_team": "突尼斯", "venue": "休斯敦体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_F_6", "stage": "小组赛", "group": "F组", "match_number": 36, "time": "2026-06-20 09:30", "home_team": "日本", "away_team": "瑞典", "venue": "堪萨斯城体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_G_1", "stage": "小组赛", "group": "G组", "match_number": 37, "time": "2026-06-11 09:00", "home_team": "比利时", "away_team": "埃及", "venue": "亚特兰大体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_G_2", "stage": "小组赛", "group": "G组", "match_number": 38, "time": "2026-06-11 12:00", "home_team": "伊朗", "away_team": "新西兰", "venue": "费城体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_G_3", "stage": "小组赛", "group": "G组", "match_number": 39, "time": "2026-06-14 09:00", "home_team": "比利时", "away_team": "伊朗", "venue": "亚特兰大体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_G_4", "stage": "小组赛", "group": "G组", "match_number": 40, "time": "2026-06-14 12:00", "home_team": "埃及", "away_team": "新西兰", "venue": "费城体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_G_5", "stage": "小组赛", "group": "G组", "match_number": 41, "time": "2026-06-17 09:00", "home_team": "比利时", "away_team": "新西兰", "venue": "亚特兰大体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_G_6", "stage": "小组赛", "group": "G组", "match_number": 42, "time": "2026-06-17 12:00", "home_team": "埃及", "away_team": "伊朗", "venue": "费城体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_H_1", "stage": "小组赛", "group": "H组", "match_number": 43, "time": "2026-06-12 06:30", "home_team": "西班牙", "away_team": "佛得角", "venue": "休斯敦体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_H_2", "stage": "小组赛", "group": "H组", "match_number": 44, "time": "2026-06-12 09:30", "home_team": "沙特阿拉伯", "away_team": "乌拉圭", "venue": "达拉斯体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_H_3", "stage": "小组赛", "group": "H组", "match_number": 45, "time": "2026-06-15 06:30", "home_team": "西班牙", "away_team": "沙特阿拉伯", "venue": "休斯敦体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_H_4", "stage": "小组赛", "group": "H组", "match_number": 46, "time": "2026-06-15 09:30", "home_team": "佛得角", "away_team": "乌拉圭", "venue": "达拉斯体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_H_5", "stage": "小组赛", "group": "H组", "match_number": 47, "time": "2026-06-18 06:30", "home_team": "西班牙", "away_team": "乌拉圭", "venue": "休斯敦体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_H_6", "stage": "小组赛", "group": "H组", "match_number": 48, "time": "2026-06-18 09:30", "home_team": "佛得角", "away_team": "沙特阿拉伯", "venue": "达拉斯体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_I_1", "stage": "小组赛", "group": "I组", "match_number": 49, "time": "2026-06-13 06:30", "home_team": "法国", "away_team": "塞内加尔", "venue": "迈阿密体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_I_2", "stage": "小组赛", "group": "I组", "match_number": 50, "time": "2026-06-13 09:30", "home_team": "伊拉克", "away_team": "挪威", "venue": "亚特兰大体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_I_3", "stage": "小组赛", "group": "I组", "match_number": 51, "time": "2026-06-16 06:30", "home_team": "法国", "away_team": "伊拉克", "venue": "迈阿密体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_I_4", "stage": "小组赛", "group": "I组", "match_number": 52, "time": "2026-06-16 09:30", "home_team": "塞内加尔", "away_team": "挪威", "venue": "亚特兰大体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_I_5", "stage": "小组赛", "group": "I组", "match_number": 53, "time": "2026-06-19 06:30", "home_team": "法国", "away_team": "挪威", "venue": "迈阿密体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_I_6", "stage": "小组赛", "group": "I组", "match_number": 54, "time": "2026-06-19 09:30", "home_team": "塞内加尔", "away_team": "伊拉克", "venue": "亚特兰大体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_J_1", "stage": "小组赛", "group": "J组", "match_number": 55, "time": "2026-06-11 06:00", "home_team": "阿根廷", "away_team": "阿尔及利亚", "venue": "纽约新泽西体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_J_2", "stage": "小组赛", "group": "J组", "match_number": 56, "time": "2026-06-11 09:30", "home_team": "奥地利", "away_team": "约旦", "venue": "费城体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_J_3", "stage": "小组赛", "group": "J组", "match_number": 57, "time": "2026-06-14 06:30", "home_team": "阿根廷", "away_team": "奥地利", "venue": "纽约新泽西体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_J_4", "stage": "小组赛", "group": "J组", "match_number": 58, "time": "2026-06-14 09:30", "home_team": "阿尔及利亚", "away_team": "约旦", "venue": "费城体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_J_5", "stage": "小组赛", "group": "J组", "match_number": 59, "time": "2026-06-17 06:30", "home_team": "阿根廷", "away_team": "约旦", "venue": "纽约新泽西体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_J_6", "stage": "小组赛", "group": "J组", "match_number": 60, "time": "2026-06-17 09:30", "home_team": "阿尔及利亚", "away_team": "奥地利", "venue": "费城体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_K_1", "stage": "小组赛", "group": "K组", "match_number": 61, "time": "2026-06-13 06:00", "home_team": "葡萄牙", "away_team": "民主刚果", "venue": "西雅图体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_K_2", "stage": "小组赛", "group": "K组", "match_number": 62, "time": "2026-06-13 09:00", "home_team": "乌兹别克斯坦", "away_team": "哥伦比亚", "venue": "旧金山湾区体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_K_3", "stage": "小组赛", "group": "K组", "match_number": 63, "time": "2026-06-16 06:00", "home_team": "葡萄牙", "away_team": "乌兹别克斯坦", "venue": "西雅图体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_K_4", "stage": "小组赛", "group": "K组", "match_number": 64, "time": "2026-06-16 09:00", "home_team": "民主刚果", "away_team": "哥伦比亚", "venue": "旧金山湾区体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_K_5", "stage": "小组赛", "group": "K组", "match_number": 65, "time": "2026-06-19 06:00", "home_team": "葡萄牙", "away_team": "哥伦比亚", "venue": "西雅图体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_K_6", "stage": "小组赛", "group": "K组", "match_number": 66, "time": "2026-06-19 09:00", "home_team": "民主刚果", "away_team": "乌兹别克斯坦", "venue": "旧金山湾区体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_L_1", "stage": "小组赛", "group": "L组", "match_number": 67, "time": "2026-06-12 06:00", "home_team": "英格兰", "away_team": "克罗地亚", "venue": "波士顿体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_L_2", "stage": "小组赛", "group": "L组", "match_number": 68, "time": "2026-06-12 09:00", "home_team": "加纳", "away_team": "巴拿马", "venue": "波士顿体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_L_3", "stage": "小组赛", "group": "L组", "match_number": 69, "time": "2026-06-15 06:00", "home_team": "英格兰", "away_team": "加纳", "venue": "波士顿体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_L_4", "stage": "小组赛", "group": "L组", "match_number": 70, "time": "2026-06-15 09:00", "home_team": "克罗地亚", "away_team": "巴拿马", "venue": "费城体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_L_5", "stage": "小组赛", "group": "L组", "match_number": 71, "time": "2026-06-18 06:00", "home_team": "英格兰", "away_team": "巴拿马", "venue": "波士顿体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}, {"id": "group_L_6", "stage": "小组赛", "group": "L组", "match_number": 72, "time": "2026-06-18 09:00", "home_team": "克罗地亚", "away_team": "加纳", "venue": "费城体育场", "status": "upcoming", "home_score": null, "away_score": null, "actual_result": null}];
 
-async function load() {
-  let [mRes, uRes] = await Promise.all([
-    const API_BASE = 'http://10.11.20.136:8888';
+function getResults() { try { return JSON.parse(localStorage.getItem('wc2026_results')||'{}'); } catch(e) { return {}; } }
+function setResults(r) { localStorage.setItem('wc2026_results', JSON.stringify(r)); }
+function getBets() { try { return JSON.parse(localStorage.getItem('wc2026_bets')||'{}'); } catch(e) { return {}; } }
+function getUsers() {
+  let bets = getBets(); let s = new Set();
+  for (let mid in bets) { for (let nick in bets[mid]) s.add(nick); }
+  return [...s];
+}
 
-    fetch(API_BASE + '/api/matches'),
-    fetch(API_BASE + '/api/admin/users')
-  ]);
-  let mData = await mRes.json();
-  let uData = await uRes.json();
-  matches = mData.matches || [];
-  document.getElementById('totalMatches').textContent = matches.length;
-  document.getElementById('finishedMatches').textContent = matches.filter(m => m.status === 'finished').length;
-  document.getElementById('totalUsers').textContent = (uData.users || []).length;
-  
+function render() {
+  let results = getResults();
+  let bets = getBets();
+  let users = getUsers();
+
+  let totalBets = 0;
+  for (let mid in bets) totalBets += Object.keys(bets[mid]).length;
+
+  document.getElementById('totalMatches').textContent = MATCHES_DATA.length;
+  document.getElementById('finishedMatches').textContent = Object.keys(results).length;
+  document.getElementById('totalUsers').textContent = users.length;
+  document.getElementById('totalBets').textContent = totalBets;
+
   // 筛选按钮
-  let stages = [...new Set(matches.map(m => m.stage || m.group))];
-  let fhtml = `<button class="filter-btn active" onclick="setFilter('all')">全部</button>`;
-  stages.forEach(s => { fhtml += `<button class="filter-btn" onclick="setFilter('${s}')">${s}</button>`; });
-  document.getElementById('filterBar').innerHTML = fhtml;
-  
-  renderMatches();
+  let groups = [...new Set(MATCHES_DATA.map(m => m.group))].sort();
+  let fb = document.getElementById('filterBar');
+  fb.innerHTML = '<button class="filter-btn active" onclick="filterGroup(this,\'\'\')">全部</button>';
+  groups.forEach(g => {
+    fb.innerHTML += '<button class="filter-btn" onclick="filterGroup(this,\'\'+g+'\'\')">' + g + '组</button>';
+  });
+
+  // 比赛列表
+  renderMatchList('', results, bets);
 }
 
-function setFilter(f) {
-  filter = f;
+let currentFilter = '';
+
+function filterGroup(el, g) {
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
-  renderMatches();
+  el.classList.add('active');
+  currentFilter = g;
+  renderMatchList(g, getResults(), getBets());
 }
 
-function renderMatches() {
-  let filtered = filter === 'all' ? matches : matches.filter(m => (m.stage || m.group) === filter);
-  filtered.sort((a, b) => a.time.localeCompare(b.time));
+function renderMatchList(filter, results, bets) {
+  let filtered = filter ? MATCHES_DATA.filter(m => m.group === filter) : MATCHES_DATA;
+  let el = document.getElementById('matchList');
+  if (filtered.length === 0) { el.innerHTML = '<div class="empty">暂无比赛</div>'; return; }
   let html = '';
-  filtered.forEach(m => {
-    let isFinished = m.status === 'finished';
-    html += `<div class="match-item ${isFinished ? 'finished' : ''}">
-      <div class="info">${m.stage || m.group} · ${m.time.replace('2026-', '')} · ${m.venue || ''}</div>
-      <div class="teams">${m.home_team} vs ${m.away_team}</div>`;
+  for (let m of filtered) {
+    let r = results[m.id];
+    let isFinished = r || m.status === 'finished';
+    html += '<div class="match-item' + (isFinished ? ' finished' : '') + '">';
+    html += '<div class="info">' + m.group + '组 · ' + m.time + ' · ' + (m.venue||'') + '</div>';
+    html += '<div class="teams">' + m.home_team + ' vs ' + m.away_team + '</div>';
     if (isFinished) {
-      html += `<div class="result">✅ 已结束 ${m.home_score} : ${m.away_score}</div>`;
+      html += '<div class="result-display">' + (r ? r.home_score : m.home_score) + ':' + (r ? r.away_score : m.away_score) + '</div>';
+      html += '<button onclick="editResult(\'' + m.id + '\')" style="padding:6px 12px;border:none;border-radius:6px;background:#3b82f6;color:white;cursor:pointer;font-size:13px;">修改</button>';
     } else {
-      html += `<div class="score-form">
-        <span>比分:</span>
-        <input type="number" id="hs_${m.id}" min="0" max="20" placeholder="主">
-        <span>:</span>
-        <input type="number" id="as_${m.id}" min="0" max="20" placeholder="客">
-        <button onclick="updateResult('${m.id}')">结算比赛</button>
-      </div>`;
+      html += '<div class="edit-form">';
+      html += '<input id="hs_' + m.id + '" type="number" min="0" max="20" placeholder="主">';
+      html += '<span style="color:var(--muted)">:</span>';
+      html += '<input id="as_' + m.id + '" type="number" min="0" max="20" placeholder="客">';
+      html += '<button onclick="saveResult(\'' + m.id + '\')">✅ 结算</button>';
+      html += '</div>';
     }
-    html += `</div>`;
-  });
-  document.getElementById('matchList').innerHTML = html;
-}
-
-async function updateResult(matchId) {
-  let hs = parseInt(document.getElementById('hs_' + matchId).value);
-  let as_ = parseInt(document.getElementById('as_' + matchId).value);
-  if (isNaN(hs) || isNaN(as_)) { alert('请输入有效比分'); return; }
-  if (!confirm(`确认更新本场结果：${hs} : ${as_}？\n此操作不可撤销！`)) return;
-  
-  let res = await fetch(API_BASE + '/api/admin/update_result', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ match_id: matchId, home_score: hs, away_score: as_ })
-  });
-  let data = await res.json();
-  if (data.ok) {
-    alert('比赛结果已更新！');
-    load();
-  } else {
-    alert(data.msg);
+    html += '</div>';
   }
+  el.innerHTML = html;
 }
 
-async function resetBets() {
-  if (!confirm('确定要重置所有用户的竞猜数据吗？此操作不可恢复！')) return;
-  if (!confirm('再次确认：所有竞猜数据将被清空！')) return;
-  let res = await fetch(API_BASE + '/api/admin/reset_bets', { method: 'POST' });
-  let data = await res.json();
-  if (data.ok) { alert('竞猜数据已重置'); }
+function saveResult(mid) {
+  let m = MATCHES_DATA.find(x => x.id === mid);
+  if (!m) return;
+  let hs = parseInt(document.getElementById('hs_' + mid).value);
+  let as_ = parseInt(document.getElementById('as_' + mid).value);
+  if (isNaN(hs) || isNaN(as_) || hs < 0 || as_ > 20) { alert('请输入有效比分(0-20)'); return; }
+  if (!confirm(m.home_team + ' ' + hs + ':' + as_ + ' ' + m.away_team + ' - 确定结算？')) return;
+  let r = getResults();
+  r[mid] = { home_score: hs, away_score: as_, status: hs > as_ ? 'home' : (hs < as_ ? 'away' : 'draw') };
+  setResults(r);
+  render();
 }
 
-load();
+function editResult(mid) {
+  let m = MATCHES_DATA.find(x => x.id === mid);
+  if (!m) return;
+  let r = getResults()[mid] || { home_score: m.home_score, away_score: m.away_score };
+  let hs = prompt(m.home_team + ' 进球数:', r.home_score);
+  if (hs === null) return;
+  let as_ = prompt(m.away_team + ' 进球数:', r.away_score);
+  if (as_ === null) return;
+  hs = parseInt(hs); as_ = parseInt(as_);
+  if (isNaN(hs) || isNaN(as_) || hs < 0 || as_ > 20) { alert('输入无效'); return; }
+  let results = getResults();
+  results[mid] = { home_score: hs, away_score: as_, status: hs > as_ ? 'home' : (hs < as_ ? 'away' : 'draw') };
+  setResults(results);
+  render();
+}
+
+function exportData() {
+  let data = { results: getResults(), bets: getBets(), exported_at: new Date().toISOString() };
+  let blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  let a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  let now = new Date(); let ds = now.getFullYear()+''+(now.getMonth()+1)+''+now.getDate();
+  a.download = 'wc2026_' + ds + '.json'; a.click();
+}
+
+function importData(e) {
+  let file = e.target.files[0]; if (!file) return;
+  let reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      let data = JSON.parse(ev.target.result);
+      if (data.results) setResults(data.results);
+      if (data.bets) localStorage.setItem('wc2026_bets', JSON.stringify(data.bets));
+      render();
+      alert('✅ 导入成功！比赛结果 ' + Object.keys(data.results||{}).length + ' 条，竞猜数据已恢复');
+    } catch(err) { alert('❌ 文件格式错误'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function resetData() {
+  if (!confirm('⚠️ 确定要清除所有竞猜数据和比赛结果？此操作不可撤销！')) return;
+  if (!confirm('再次确认：删除所有数据？')) return;
+  localStorage.removeItem('wc2026_results');
+  localStorage.removeItem('wc2026_bets');
+  render();
+}
+
+render();
 </script>
 </body>
 </html>
