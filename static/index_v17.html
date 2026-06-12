@@ -514,10 +514,19 @@ body {
     <span id="nicknameDisplay"></span>
     <button class="logout" onclick="logout()">退出</button>
   </div>
+  <!-- Debug 面板 -->
+  <div id="debugPanel" style="display:none;background:#1a1a2e;border:1px solid #e94560;border-radius:8px;margin:8px 0;padding:10px;font-size:12px;">
+    <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+      <b style="color:#e94560">🐛 Debug</b>
+      <span onclick="document.getElementById('debugPanel').style.display='none'" style="cursor:pointer;color:#94a3b8">✕</span>
+    </div>
+    <div id="debugContent" style="color:#e2e8f0;font-family:monospace;white-space:pre-wrap;word-break:break-all;"></div>
+  </div>
   <div class="cloud-toolbar">
     <button onclick="loadCloudData()" id="cloudLoadBtn" class="cloud-btn">🌩️ 云端加载</button>
     <button onclick="uploadMyBets()" id="cloudUploadBtn" class="cloud-btn">⬆️ 上传我的竞猜</button>
     <span class="cloud-status" id="cloudStatus"></span>
+    <button onclick="toggleDebug()" class="cloud-btn" style="margin-left:4px;background:#e94560">🐛</button>
   </div>
 </div>
 
@@ -775,6 +784,7 @@ function loadCloudData(quiet) {
     }
     if (status) status.textContent = '✅ ' + (data.updated_at ? data.updated_at.slice(0,16).replace('T',' ') : '') + ' 已更新';
     if (btn) { btn.textContent = '🌩️ 云端加载'; btn.disabled = false; }
+    showDebug();
   }).catch(err => {
     if (status) status.textContent = '❌ ' + err.message;
     if (btn) { btn.textContent = '🌩️ 云端加载'; btn.disabled = false; }
@@ -783,6 +793,41 @@ function loadCloudData(quiet) {
 
 // 页面打开时自动拉取云端数据
 setTimeout(loadCloudData, 1000);
+
+// === Debug工具 ===
+function toggleDebug() {
+  const p = document.getElementById('debugPanel');
+  p.style.display = p.style.display === 'none' ? 'block' : 'none';
+  showDebug();
+}
+function showDebug() {
+  const el = document.getElementById('debugContent');
+  if (!el) return;
+  const user = localStorage.getItem('wc2026_nickname') || '(未登录)';
+  let results = {};
+  let bets = {};
+  try { results = JSON.parse(localStorage.getItem('wc2026_results') || '{}'); } catch(e) {}
+  try { bets = JSON.parse(localStorage.getItem('wc2026_bets') || '{}'); } catch(e) {}
+  let lines = [];
+  lines.push(`👤 用户: ${user}`);
+  lines.push(`📊 已结算场次: ${Object.keys(results).length}`);
+  for (let mid in results) {
+    let r = results[mid];
+    let match = MATCHES_DATA.find(m => m.id === mid);
+    let label = match ? `${match.home} vs ${match.away}` : mid;
+    lines.push(`   ${label}: ${r.home_score}-${r.away_score} (${r.status})`);
+    if (bets[mid] && bets[mid][user]) {
+      let b = bets[mid][user];
+      let wonScore = b.home_score === r.home_score && b.away_score === r.away_score;
+      let wonResult = b.predicted_result === r.status;
+      lines.push(`     我的竞猜: ${b.home_score}:${b.away_score} → ${wonScore ? '⭐猜中比分' : wonResult ? '✅猜中结果' : '❌猜错'}`);
+    } else {
+      lines.push(`     未投注`);
+    }
+  }
+  lines.push(`📋 竞猜总场次: ${Object.keys(bets).length}`);
+  el.textContent = lines.join('\n');
+}
 
 // === 用户上传自己的竞猜到云端 ===
 function uploadMyBets() {
