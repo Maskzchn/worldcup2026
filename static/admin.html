@@ -57,7 +57,9 @@ input[type="file"] { display: none; }
 </head>
 <body>
 
-<h1>⚽ 2026世界杯竞猜 · 管理后台</h1>
+<h1>⚽ 2026世界杯竞猜 · 管理后台
+  <span style="font-size:14px;font-weight:normal;cursor:pointer;color:var(--muted);float:right;" onclick="showTokenInput()" id="tokenStatus">⚙️ 设置Token</span>
+</h1>
 <p style="color:var(--muted);margin-bottom:20px;">💡 此页面纯前端运行，数据存储在浏览器本地。⚠️ 切换到其他浏览器会丢失数据，请定期导出备份。</p>
 
 <div class="stats" id="stats">
@@ -216,9 +218,11 @@ function resetData() {
 
 // === 云同步（基于GitHub Gist）===
 const GIST_ID = '6abff303d9ae90b527f5b594437f6ee6';
-const GITHUB_TOKEN = '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';
+function getToken() { return localStorage.getItem('wc2026_github_token') || ''; }
 
 function syncToCloud() {
+  const token = getToken();
+  if (!token) { alert('⚠️ 请先设置 GitHub Token：点击页面右上角"设置Token"'); showTokenInput(); return; }
   const btn = document.getElementById('syncBtn');
   btn.textContent = '⏳ 同步中...';
   btn.disabled = true;
@@ -230,7 +234,7 @@ function syncToCloud() {
   fetch('https://api.github.com/gists/' + GIST_ID, {
     method: 'PATCH',
     headers: {
-      'Authorization': 'token ' + GITHUB_TOKEN,
+      'Authorization': 'token ' + token,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
@@ -272,6 +276,19 @@ function loadFromCloud() {
     btn.textContent = '❌ ' + err.message;
     btn.disabled = false;
   });
+}
+
+// === Token 设置 ===
+function showTokenInput() {
+  const existing = prompt('请输入 GitHub Personal Access Token（gist权限）：', getToken() || '');
+  if (existing === null) return;
+  const v = existing.trim();
+  if (!v) { alert('Token 不能为空'); return; }
+  if (!v.startsWith('ghp_') && !v.startsWith('github_pat_')) {
+    if (!confirm('Token 格式似乎不对，正常以 ghp_ 或 github_pat_ 开头，确定保存？')) return;
+  }
+  localStorage.setItem('wc2026_github_token', v);
+  alert('✅ Token 已保存！现在可以使用"云同步"了。');
 }
 
 render();
