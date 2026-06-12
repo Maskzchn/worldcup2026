@@ -516,6 +516,7 @@ body {
   </div>
   <div class="cloud-toolbar">
     <button onclick="loadCloudData()" id="cloudLoadBtn" class="cloud-btn">🌩️ 云端加载</button>
+    <button onclick="uploadMyBets()" id="cloudUploadBtn" class="cloud-btn">⬆️ 上传我的竞猜</button>
     <span class="cloud-status" id="cloudStatus"></span>
   </div>
 </div>
@@ -633,14 +634,20 @@ function getUserBets(nickname) {
           let results = getResults();
           let result = results[mid];
           let won_score = false, won_result = false, starsEarned = 0;
+          let actualHome = null, actualAway = null, actualStatus = match.status;
           if (result) {
-            won_score = bet.home_score === result.home_score && bet.away_score === result.away_score;
+            actualHome = result.home_score;
+            actualAway = result.away_score;
+            actualStatus = 'finished';
+            won_score = bet.home_score === actualHome && bet.away_score === actualAway;
             won_result = bet.predicted_result === result.status;
             if (won_score) starsEarned = 3;
             else if (won_result) starsEarned = 1;
           }
           userBets.push({
-            match_id: mid, match: match, bet: bet,
+            match_id: mid,
+            match: { ...match, home_score: actualHome, away_score: actualAway, status: actualStatus },
+            bet: bet,
             home_score: bet.home_score, away_score: bet.away_score, predicted_result: bet.predicted_result,
             won_score: won_score, won_result: won_result, stars_earned: starsEarned,
             bet_at: bet.bet_at
@@ -776,6 +783,57 @@ function loadCloudData(quiet) {
 
 // 页面打开时自动拉取云端数据
 setTimeout(loadCloudData, 1000);
+
+// === 用户上传自己的竞猜到云端 ===
+function uploadMyBets() {
+  const btn = document.getElementById('cloudUploadBtn');
+  const status = document.getElementById('cloudStatus');
+  const nick = currentUser || localStorage.getItem('wc2026_nickname');
+  if (!nick) { alert('请先登录！'); return; }
+  
+  btn.textContent = '⏳ 上传中...';
+  btn.disabled = true;
+  if (status) status.textContent = '正在上传竞猜数据...';
+  
+  // 先拉取云端现有数据，合并当前用户竞猜后再上传
+  fetch('https://api.github.com/gists/' + GIST_ID, {
+    headers: { 'Accept': 'application/vnd.github.v3+json' }
+  }).then(r => r.json()).then(d => {
+    const cloud = JSON.parse(d.files['wc2026_cloud_data.json'].content);
+    const cloudBets = cloud.bets || {};
+    const cloudResults = cloud.results || {};
+    
+    // 合并：云端现有竞猜 + 当前用户的竞猜
+    const myBets = getBetsAll();
+    for (let mid in myBets) {
+      if (!cloudBets[mid]) cloudBets[mid] = {};
+      cloudBets[mid][nick] = myBets[mid][nick];
+    }
+    
+    const payload = JSON.stringify({ results: cloudResults, bets: cloudBets, updated_at: new Date().toISOString() });
+    return fetch('https://api.github.com/gists/' + GIST_ID, {
+      method: 'PATCH',
+      headers: { 'Authorization': 'token ' + localStorage.getItem('wc2026_github_token'), 'Content-Type': 'application/json' }
+    }).catch(() => {
+      // 如果没Token，用匿名方式写不了
+      throw new Error('上传需要 GitHub Token，请联系管理员设置');
+    }).then(r => r.json());
+  }).then(d => {
+    if (d.html_url) {
+      if (status) status.textContent = '✅ 竞猜已上传';
+      btn.textContent = '⬆️ 上传我的竞猜';
+      btn.disabled = false;
+    } else {
+      throw new Error(d.message || '上传失败');
+    }
+  }).catch(err => {
+    if (status) status.textContent = '❌ ' + err.message;
+    btn.textContent = '⬆️ 上传我的竞猜';
+    btn.disabled = false;
+  });
+}
+
+let currentUser = localStorage.getItem('wc2026_nickname') || '';
 
 // 给管理员使用 - 通过URL参数激活管理功能
 const IS_ADMIN = location.hash === '#admin' || location.search.includes('admin');
