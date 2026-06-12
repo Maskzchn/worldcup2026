@@ -181,6 +181,8 @@ function editResult(mid) {
   let results = getResults();
   results[mid] = { home_score: hs, away_score: as_, status: hs > as_ ? 'home' : (hs < as_ ? 'away' : 'draw') };
   setResults(results);
+  // 同步更新MATCHES_DATA中的状态
+  m.home_score = hs; m.away_score = as_; m.status = 'finished';
   render();
 }
 
@@ -227,22 +229,30 @@ function syncToCloud() {
   btn.textContent = '⏳ 同步中...';
   btn.disabled = true;
   
-  const results = getResults();
-  const bets = getBets();
-  const payload = JSON.stringify({ results, bets, updated_at: new Date().toISOString() });
-  
+  // 先拉取云端现有数据（保留用户竞猜），再合并本地结果
   fetch('https://api.github.com/gists/' + GIST_ID, {
-    method: 'PATCH',
-    headers: {
-      'Authorization': 'token ' + token,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      files: {
-        'wc2026_cloud_data.json': { content: payload }
-      }
-    })
+    headers: { 'Accept': 'application/vnd.github.v3+json' }
   }).then(r => r.json()).then(d => {
+    let cloudBets = {};
+    try {
+      const cloud = JSON.parse(d.files['wc2026_cloud_data.json'].content);
+      cloudBets = cloud.bets || {};
+    } catch(e) { cloudBets = {}; }
+    
+    // 合并：以云端用户竞猜为主，本地结果覆盖云端结果
+    const localResults = getResults();
+    const localBets = getBets();
+    for (let mid in localBets) {
+      cloudBets[mid] = { ...(cloudBets[mid] || {}), ...localBets[mid] };
+    }
+    
+    const payload = JSON.stringify({ results: localResults, bets: cloudBets, updated_at: new Date().toISOString() });
+    return fetch('https://api.github.com/gists/' + GIST_ID, {
+      method: 'PATCH',
+      headers: { 'Authorization': 'token ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ files: { 'wc2026_cloud_data.json': { content: payload } } })
+    }).then(r => r.json());
+  }).then(d => {
     if (d.html_url) {
       btn.textContent = '✅ 已同步';
       setTimeout(() => { btn.textContent = '☁️ 云同步'; btn.disabled = false; }, 2000);
@@ -267,8 +277,19 @@ function loadFromCloud() {
     const data = JSON.parse(content);
     const results = data.results || {};
     const bets = data.bets || {};
+    // 合并：保留管理员本地已有的竞猜数据（防止用户上传后管理员覆盖丢失）
+    const localBets = getBets();
+    const mergedBets = { ...bets };
+    for (let mid in localBets) {
+      if (!mergedBets[mid]) mergedBets[mid] = {};
+      for (let nick in localBets[mid]) {
+        if (!mergedBets[mid][nick]) {
+          mergedBets[mid][nick] = localBets[mid][nick];
+        }
+      }
+    }
     localStorage.setItem('wc2026_results', JSON.stringify(results));
-    localStorage.setItem('wc2026_bets', JSON.stringify(bets));
+    localStorage.setItem('wc2026_bets', JSON.stringify(mergedBets));
     render();
     btn.textContent = '✅ 加载成功';
     setTimeout(() => { btn.textContent = '🌩️ 云端加载'; btn.disabled = false; }, 2000);

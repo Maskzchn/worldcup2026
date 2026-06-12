@@ -877,6 +877,11 @@ function uploadMyBets() {
     }).then(r => r.json());
   }).then(d => {
     if (d.html_url) {
+      // 上传成功后同步本地并刷新
+      setBetsAll(cloudBets);
+      setResults(cloudResults);
+      renderLeaderboard();
+      switchTab(activeTab);
       if (status) status.textContent = '✅ 竞猜已上传';
       btn.textContent = '⬆️ 上传我的竞猜';
       btn.disabled = false;

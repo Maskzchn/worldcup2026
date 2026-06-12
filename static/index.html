@@ -478,6 +478,27 @@ body {
   50% { transform: scale(1.3); }
   100% { transform: scale(1); }
 }
+
+.cloud-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.cloud-btn {
+  padding: 5px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.cloud-btn:hover { background: #6366f1; color: white; border-color: #6366f1; }
+.cloud-status { font-size: 11px; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -492,6 +513,10 @@ body {
   <div class="user-info" id="userInfo" style="display:none">
     <span id="nicknameDisplay"></span>
     <button class="logout" onclick="logout()">退出</button>
+  </div>
+  <div class="cloud-toolbar">
+    <button onclick="loadCloudData()" id="cloudLoadBtn" class="cloud-btn">🌩️ 云端加载</button>
+    <span class="cloud-status" id="cloudStatus"></span>
   </div>
 </div>
 
@@ -607,17 +632,17 @@ function getUserBets(nickname) {
           let bet = allBets[mid][nick];
           let results = getResults();
           let result = results[mid];
-          let wonScore = false, wonResult = false, starsEarned = 0;
+          let won_score = false, won_result = false, starsEarned = 0;
           if (result) {
-            wonScore = bet.home_score === result.home_score && bet.away_score === result.away_score;
-            wonResult = bet.predicted_result === result.status;
-            if (wonScore) starsEarned = 3;
-            else if (wonResult) starsEarned = 1;
+            won_score = bet.home_score === result.home_score && bet.away_score === result.away_score;
+            won_result = bet.predicted_result === result.status;
+            if (won_score) starsEarned = 3;
+            else if (won_result) starsEarned = 1;
           }
           userBets.push({
             match_id: mid, match: match, bet: bet,
             home_score: bet.home_score, away_score: bet.away_score, predicted_result: bet.predicted_result,
-            won_score: wonScore, won_result: wonResult, stars_earned: starsEarned,
+            won_score: won_score, won_result: won_result, stars_earned: starsEarned,
             bet_at: bet.bet_at
           });
         }
@@ -716,6 +741,44 @@ function importBetsData(jsonStr) {
     return true;
   } catch(e) { return false; }
 }
+
+// === 云端数据加载（GitHub Gist）===
+const GIST_ID = '6abff303d9ae90b527f5b594437f6ee6';
+function loadCloudData(quiet) {
+  const btn = document.getElementById('cloudLoadBtn');
+  const status = document.getElementById('cloudStatus');
+  if (!quiet && btn) { btn.textContent = '⏳ 加载中...'; btn.disabled = true; }
+  if (status) status.textContent = '正在连接云端...';
+  
+  fetch('https://api.github.com/gists/' + GIST_ID, {
+    headers: { 'Accept': 'application/vnd.github.v3+json' }
+  }).then(r => r.json()).then(d => {
+    if (!d.files || !d.files['wc2026_cloud_data.json']) throw new Error('云端无数据');
+    const content = d.files['wc2026_cloud_data.json'].content;
+    const data = JSON.parse(content);
+    const oldResults = JSON.stringify(getResults());
+    const oldBets = JSON.stringify(getBetsAll());
+    const newResults = JSON.stringify(data.results || {});
+    const newBets = JSON.stringify(data.bets || {});
+    
+    if (oldResults !== newResults) setResults(data.results || {});
+    if (oldBets !== newBets) setBetsAll(data.bets || {});
+    
+    if (oldResults !== newResults || oldBets !== newBets) {
+      loadAll();
+      if (status) status.textContent = '✅ ' + (data.updated_at ? data.updated_at.slice(0,16).replace('T',' ') : '') + ' 已更新';
+    } else {
+      if (status) status.textContent = '✅ 数据已最新';
+    }
+    if (btn) { btn.textContent = '🌩️ 云端加载'; btn.disabled = false; }
+  }).catch(err => {
+    if (status) status.textContent = '❌ ' + err.message;
+    if (btn) { btn.textContent = '🌩️ 云端加载'; btn.disabled = false; }
+  });
+}
+
+// 页面打开时自动拉取云端数据
+setTimeout(loadCloudData, 1000);
 
 // 给管理员使用 - 通过URL参数激活管理功能
 const IS_ADMIN = location.hash === '#admin' || location.search.includes('admin');
@@ -876,14 +939,6 @@ function renderBet() {
     html += matchCardHTML(m, true);
   }
   document.getElementById('betContent').innerHTML = html || '<div class="empty-state"><div class="icon">🎯</div><p>暂无比赛</p></div>';
-  
-  // 加载每个比赛的竞猜人数
-  document.querySelectorAll('[data-bet-count]').forEach(el => {
-    let mid = el.dataset.betCount;
-    let bets = getMatchBets(mid);
-    let count = Object.keys(bets).length;
-    el.textContent = count > 0 ? `👥 ${count}人已猜` : '暂无竞猜';
-  });
 }
 
 function matchCardHTML(m, showBet) {
@@ -926,7 +981,6 @@ function matchCardHTML(m, showBet) {
       ${scoreDisplay}
       <div class="team-block"><div class="flag">${getFlag(m.away_team)}</div><div class="name">${m.away_team}</div></div>
     </div>
-    <div class="bettor-count" data-bet-count="${m.id}">👥 加载中...</div>
     ${betSection}
     ${m.venue ? `<div class="bettor-count" style="margin-top:2px">📍 ${m.venue}</div>` : ''}
   </div>`;
@@ -1112,109 +1166,6 @@ function getFlag(team) {
   return flags[team] || '🏳️';
 }
 
-// ===== 本地存储工具函数 =====
-function getResults() {
-  try { return JSON.parse(localStorage.getItem('wc2026_results') || '{}'); } catch(e) { return {}; }
-}
-function setResults(results) {
-  localStorage.setItem('wc2026_results', JSON.stringify(results));
-}
-function getBetsAll() {
-  try { return JSON.parse(localStorage.getItem('wc2026_bets') || '{}'); } catch(e) { return {}; }
-}
-function setBetsAll(bets) {
-  localStorage.setItem('wc2026_bets', JSON.stringify(bets));
-}
-function saveBet(matchId, nickname, homeScore, awayScore) {
-  let allBets = getBetsAll();
-  if (!allBets[matchId]) allBets[matchId] = {};
-  allBets[matchId][nickname] = { home_score: homeScore, away_score: awayScore, predicted_result: homeScore > awayScore ? 'home' : (homeScore < awayScore ? 'away' : 'draw'), bet_at: new Date().toISOString() };
-  setBetsAll(allBets);
-}
-function getMatchBets(matchId) {
-  return getBetsAll()[matchId] || {};
-}
-function getUserBets(nickname) {
-  let allBets = getBetsAll();
-  let userBets = [];
-  for (let mid in allBets) {
-    for (let nick in allBets[mid]) {
-      if (nick === nickname) {
-        let match = MATCHES_DATA.find(m => m.id === mid);
-        if (match) {
-          let bet = allBets[mid][nick];
-          let results = getResults();
-          let result = results[mid];
-          let wonScore = false, wonResult = false, starsEarned = 0;
-          if (result) {
-            wonScore = bet.home_score === result.home_score && bet.away_score === result.away_score;
-            wonResult = bet.predicted_result === result.status;
-            if (wonScore) starsEarned = 3;
-            else if (wonResult) starsEarned = 1;
-          }
-          userBets.push({
-            match_id: mid, match: match, bet: bet,
-            home_score: bet.home_score, away_score: bet.away_score, predicted_result: bet.predicted_result,
-            won_score: wonScore, won_result: wonResult, stars_earned: starsEarned,
-            bet_at: bet.bet_at
-          });
-        }
-      }
-    }
-  }
-  return userBets.sort((a, b) => (b.match.time || '').localeCompare(a.match.time || ''));
-}
-function calcLeaderboard() {
-  let results = getResults();
-  let allBets = getBetsAll();
-  let users = getAllUsers();
-  let board = [];
-  for (let user of users) {
-    let totalBets = 0, resultCorrect = 0, scoreCorrect = 0;
-    for (let mid in allBets) {
-      let bet = allBets[mid][user];
-      if (!bet) continue;
-      let result = results[mid];
-      if (!result) continue;
-      totalBets++;
-      let predictedResult = bet.predicted_result;
-      let actualResult = result.status || (result.home_score > result.away_score ? 'home' : result.home_score < result.away_score ? 'away' : 'draw');
-      let wonResult = predictedResult === actualResult;
-      let wonScore = bet.home_score === result.home_score && bet.away_score === result.away_score;
-      if (wonResult) resultCorrect++;
-      if (wonScore) scoreCorrect++;
-    }
-    if (totalBets > 0) {
-      let stars = resultCorrect + scoreCorrect * 2;
-      board.push({ nickname: user, total_bets: totalBets, result_correct: resultCorrect, score_correct: scoreCorrect, stars: stars, accuracy: Math.round(resultCorrect / totalBets * 100) });
-    }
-  }
-  return board.sort((a, b) => b.stars - a.stars || b.total_bets - a.total_bets);
-}
-function resetAllData() {
-  if (confirm('确定重置所有竞猜和比赛结果数据？')) {
-    localStorage.removeItem('wc2026_bets');
-    localStorage.removeItem('wc2026_results');
-    loadAll();
-  }
-}
-function exportBetsData() {
-  let data = { results: getResults(), bets: getBetsAll(), exported_at: new Date().toISOString() };
-  let blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
-  let a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'worldcup2026_data.json';
-  a.click();
-}
-function importBetsData(jsonStr) {
-  try {
-    let data = JSON.parse(jsonStr);
-    if (data.results) setResults(data.results);
-    if (data.bets) setBetsAll(data.bets);
-    loadAll();
-    return true;
-  } catch(e) { return false; }
-}
 
 // 给管理员使用 - 通过URL参数激活管理功能
 
