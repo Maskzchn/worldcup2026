@@ -773,9 +773,21 @@ function loadCloudData(quiet) {
     const content = d.files['wc2026_cloud_data.json'].content;
     const data = JSON.parse(content);
     
-    // 无条件用云端数据覆盖本地，确保数据一致
+    // 合并云端数据：bets 合并（保留本地用户竞猜），results 以云端为准
+    const localBets = getBetsAll();
+    const cloudBets = data.bets || {};
+    const mergedBets = { ...cloudBets };
+    for (let mid in localBets) {
+      if (!mergedBets[mid]) mergedBets[mid] = {};
+      for (let nick in localBets[mid]) {
+        // 本地有但云端没有的竞猜→写入云端（用户投注后还没上传过）
+        if (!mergedBets[mid][nick]) {
+          mergedBets[mid][nick] = localBets[mid][nick];
+        }
+      }
+    }
     setResults(data.results || {});
-    setBetsAll(data.bets || {});
+    setBetsAll(mergedBets);
     loadAll();
     // 重新渲染当前活动的tab
     if (typeof activeTab !== 'undefined') {
