@@ -1220,7 +1220,7 @@ function renderMine() {
       myBets.forEach(b => {
         let m = b.match || {};
         let bet = b.bet || {};
-        let resultIcon = b.won_score ? '⭐' : (b.won_result ? '✅' : '⏳');
+        let resultIcon = b.won_score ? '⭐' : (b.won_result ? '✅' : (m.status === 'finished' ? '❌' : '⏳'));
         let resultText = m.status === 'finished' 
           ? (b.won_score ? '猜中比分!' : (b.won_result ? '猜中结果' : '猜错了'))
           : '等待结算';
