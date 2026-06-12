@@ -756,25 +756,17 @@ function loadCloudData(quiet) {
     if (!d.files || !d.files['wc2026_cloud_data.json']) throw new Error('云端无数据');
     const content = d.files['wc2026_cloud_data.json'].content;
     const data = JSON.parse(content);
-    const oldResults = JSON.stringify(getResults());
-    const oldBets = JSON.stringify(getBetsAll());
-    const newResults = JSON.stringify(data.results || {});
-    const newBets = JSON.stringify(data.bets || {});
     
-    if (oldResults !== newResults) setResults(data.results || {});
-    if (oldBets !== newBets) setBetsAll(data.bets || {});
-    
-    if (oldResults !== newResults || oldBets !== newBets) {
-      loadAll();
-      // 重新渲染当前活动的tab（排行榜/我的竞猜）
-      if (typeof activeTab !== 'undefined') {
-        if (activeTab === 'mine') renderMine();
-        if (activeTab === 'standings' || activeTab === 'ranking') renderStandings();
-      }
-      if (status) status.textContent = '✅ ' + (data.updated_at ? data.updated_at.slice(0,16).replace('T',' ') : '') + ' 已更新';
-    } else {
-      if (status) status.textContent = '✅ 数据已最新';
+    // 无条件用云端数据覆盖本地，确保数据一致
+    setResults(data.results || {});
+    setBetsAll(data.bets || {});
+    loadAll();
+    // 重新渲染当前活动的tab
+    if (typeof activeTab !== 'undefined') {
+      if (activeTab === 'mine') renderMine();
+      if (activeTab === 'standings' || activeTab === 'ranking') renderStandings();
     }
+    if (status) status.textContent = '✅ ' + (data.updated_at ? data.updated_at.slice(0,16).replace('T',' ') : '') + ' 已更新';
     if (btn) { btn.textContent = '🌩️ 云端加载'; btn.disabled = false; }
   }).catch(err => {
     if (status) status.textContent = '❌ ' + err.message;
