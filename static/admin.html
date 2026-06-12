@@ -72,6 +72,8 @@ input[type="file"] { display: none; }
   <label class="btn-blue import-label" for="importFile">📤 导入数据</label>
   <input type="file" id="importFile" accept=".json" onchange="importData(event)">
   <button class="btn-red" onclick="resetData()">🗑️ 重置所有</button>
+  <button class="btn-green" onclick="syncToCloud()" id="syncBtn">☁️ 云同步</button>
+  <button class="btn-blue" onclick="loadFromCloud()" id="cloudBtn">🌩️ 云端加载</button>
 </div>
 
 <h2>📅 比赛管理</h2>
@@ -210,6 +212,66 @@ function resetData() {
   localStorage.removeItem('wc2026_results');
   localStorage.removeItem('wc2026_bets');
   render();
+}
+
+// === 云同步（基于GitHub Gist）===
+const GIST_ID = '6abff303d9ae90b527f5b594437f6ee6';
+const GITHUB_TOKEN = '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';
+
+function syncToCloud() {
+  const btn = document.getElementById('syncBtn');
+  btn.textContent = '⏳ 同步中...';
+  btn.disabled = true;
+  
+  const results = getResults();
+  const bets = getBets();
+  const payload = JSON.stringify({ results, bets, updated_at: new Date().toISOString() });
+  
+  fetch('https://api.github.com/gists/' + GIST_ID, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': 'token ' + GITHUB_TOKEN,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      files: {
+        'wc2026_cloud_data.json': { content: payload }
+      }
+    })
+  }).then(r => r.json()).then(d => {
+    if (d.html_url) {
+      btn.textContent = '✅ 已同步';
+      setTimeout(() => { btn.textContent = '☁️ 云同步'; btn.disabled = false; }, 2000);
+    } else {
+      throw new Error(d.message || '同步失败');
+    }
+  }).catch(err => {
+    btn.textContent = '❌ ' + err.message;
+    btn.disabled = false;
+  });
+}
+
+function loadFromCloud() {
+  const btn = document.getElementById('cloudBtn');
+  btn.textContent = '⏳ 加载中...';
+  btn.disabled = true;
+  
+  fetch('https://api.github.com/gists/' + GIST_ID, {
+    headers: { 'Accept': 'application/vnd.github.v3+json' }
+  }).then(r => r.json()).then(d => {
+    const content = d.files['wc2026_cloud_data.json'].content;
+    const data = JSON.parse(content);
+    const results = data.results || {};
+    const bets = data.bets || {};
+    localStorage.setItem('wc2026_results', JSON.stringify(results));
+    localStorage.setItem('wc2026_bets', JSON.stringify(bets));
+    render();
+    btn.textContent = '✅ 加载成功';
+    setTimeout(() => { btn.textContent = '🌩️ 云端加载'; btn.disabled = false; }, 2000);
+  }).catch(err => {
+    btn.textContent = '❌ ' + err.message;
+    btn.disabled = false;
+  });
 }
 
 render();
