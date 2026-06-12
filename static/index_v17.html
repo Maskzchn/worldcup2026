@@ -766,6 +766,11 @@ function loadCloudData(quiet) {
     
     if (oldResults !== newResults || oldBets !== newBets) {
       loadAll();
+      // 重新渲染当前活动的tab（排行榜/我的竞猜）
+      if (typeof activeTab !== 'undefined') {
+        if (activeTab === 'mine') renderMine();
+        if (activeTab === 'standings' || activeTab === 'ranking') renderStandings();
+      }
       if (status) status.textContent = '✅ ' + (data.updated_at ? data.updated_at.slice(0,16).replace('T',' ') : '') + ' 已更新';
     } else {
       if (status) status.textContent = '✅ 数据已最新';
@@ -826,7 +831,9 @@ if (currentUser) {
 }
 
 // ===== Tab切换 =====
+let activeTab = 'standings';
 function switchTab(tab) {
+  activeTab = tab;
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + tab).classList.add('active');
