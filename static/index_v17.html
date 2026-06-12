@@ -478,6 +478,27 @@ body {
   50% { transform: scale(1.3); }
   100% { transform: scale(1); }
 }
+
+.cloud-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.cloud-btn {
+  padding: 5px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.cloud-btn:hover { background: #6366f1; color: white; border-color: #6366f1; }
+.cloud-status { font-size: 11px; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -492,6 +513,10 @@ body {
   <div class="user-info" id="userInfo" style="display:none">
     <span id="nicknameDisplay"></span>
     <button class="logout" onclick="logout()">退出</button>
+  </div>
+  <div class="cloud-toolbar">
+    <button onclick="loadCloudData()" id="cloudLoadBtn" class="cloud-btn">🌩️ 云端加载</button>
+    <span class="cloud-status" id="cloudStatus"></span>
   </div>
 </div>
 
@@ -716,6 +741,44 @@ function importBetsData(jsonStr) {
     return true;
   } catch(e) { return false; }
 }
+
+// === 云端数据加载（GitHub Gist）===
+const GIST_ID = '6abff303d9ae90b527f5b594437f6ee6';
+function loadCloudData(quiet) {
+  const btn = document.getElementById('cloudLoadBtn');
+  const status = document.getElementById('cloudStatus');
+  if (!quiet && btn) { btn.textContent = '⏳ 加载中...'; btn.disabled = true; }
+  if (status) status.textContent = '正在连接云端...';
+  
+  fetch('https://api.github.com/gists/' + GIST_ID, {
+    headers: { 'Accept': 'application/vnd.github.v3+json' }
+  }).then(r => r.json()).then(d => {
+    if (!d.files || !d.files['wc2026_cloud_data.json']) throw new Error('云端无数据');
+    const content = d.files['wc2026_cloud_data.json'].content;
+    const data = JSON.parse(content);
+    const oldResults = JSON.stringify(getResults());
+    const oldBets = JSON.stringify(getBetsAll());
+    const newResults = JSON.stringify(data.results || {});
+    const newBets = JSON.stringify(data.bets || {});
+    
+    if (oldResults !== newResults) setResults(data.results || {});
+    if (oldBets !== newBets) setBetsAll(data.bets || {});
+    
+    if (oldResults !== newResults || oldBets !== newBets) {
+      loadAll();
+      if (status) status.textContent = '✅ ' + (data.updated_at ? data.updated_at.slice(0,16).replace('T',' ') : '') + ' 已更新';
+    } else {
+      if (status) status.textContent = '✅ 数据已最新';
+    }
+    if (btn) { btn.textContent = '🌩️ 云端加载'; btn.disabled = false; }
+  }).catch(err => {
+    if (status) status.textContent = '❌ ' + err.message;
+    if (btn) { btn.textContent = '🌩️ 云端加载'; btn.disabled = false; }
+  });
+}
+
+// 页面打开时自动拉取云端数据
+setTimeout(loadCloudData, 1000);
 
 // 给管理员使用 - 通过URL参数激活管理功能
 const IS_ADMIN = location.hash === '#admin' || location.search.includes('admin');
