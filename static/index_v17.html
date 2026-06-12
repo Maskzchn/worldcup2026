@@ -814,7 +814,7 @@ function showDebug() {
   for (let mid in results) {
     let r = results[mid];
     let match = MATCHES_DATA.find(m => m.id === mid);
-    let label = match ? `${match.home} vs ${match.away}` : mid;
+    let label = match ? `${match.home_team} vs ${match.away_team}` : mid;
     lines.push(`   ${label}: ${r.home_score}-${r.away_score} (${r.status})`);
     if (bets[mid] && bets[mid][user]) {
       let b = bets[mid][user];
