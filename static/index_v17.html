@@ -832,17 +832,8 @@ function uploadMyBets() {
     btn.disabled = false;
   });
 }
-
 let currentUser = localStorage.getItem('wc2026_nickname') || '';
-
-// 给管理员使用 - 通过URL参数激活管理功能
 const IS_ADMIN = location.hash === '#admin' || location.search.includes('admin');
-
-
-
-
-
-let currentUser = localStorage.getItem('wc2026_nickname') || '';
 let matches = [];
 let matchFilter = 'all';
 let betFilter = 'upcoming';
